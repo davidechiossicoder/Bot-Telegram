@@ -7,7 +7,7 @@
 ## 🚀 **Features**
 
 - 💸 **Smart Expense Tracking** - Natural language input with AI categorization
-- 💰 **Income Management** - Track salaries, freelance, and other revenue streams  
+- 💰 **Income Management** - Track salaries, freelance, and other revenue streams
 - 🤖 **OpenAI Integration** - Intelligent transaction categorization using GPT-3.5
 - 📊 **Advanced Analytics** - Charts, budgets, predictions with ML
 - 🔮 **AI Predictions** - Future spending forecasts and pattern analysis
@@ -17,7 +17,7 @@
 ## 💡 **How to Use**
 
 1. **Start the bot:** `/start`
-2. **Enable expense mode:** `/segnaspese` 
+2. **Enable expense mode:** `/segnaspese`
 3. **Add expenses:** `15.50 benzina` or `€25 supermercato`
 4. **Enable income mode:** `/segnaricavi`
 5. **Add income:** `1500 stipendio` or `200 freelance project`
@@ -26,7 +26,7 @@
 ## 🛠️ **Tech Stack**
 
 - **Language:** Python 3.11
-- **Framework:** python-telegram-bot  
+- **Framework:** python-telegram-bot
 - **AI:** OpenAI GPT-3.5-turbo
 - **Analytics:** pandas, matplotlib, seaborn
 - **ML:** scikit-learn
@@ -36,9 +36,11 @@
 ## 🚀 **Deploy Your Own**
 
 ### 1-Click Deploy on Railway:
+
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/iwy9c5)
 
 ### Manual Deploy:
+
 1. **Fork this repository**
 2. **Create Railway account** at [railway.app](https://railway.app)
 3. **Connect GitHub** and select this repo
@@ -50,19 +52,22 @@
 ## 📊 **Commands**
 
 ### 💰 Transaction Management:
+
 - `/segnaspese` - Enable expense tracking mode
-- `/segnaricavi` - Enable income tracking mode  
+- `/segnaricavi` - Enable income tracking mode
 - `/modalinormale` - Return to normal mode
 
 ### 📈 Analytics:
+
 - `/bilancio` - Income vs expenses balance
 - `/grafici` - Generate charts and visualizations
 - `/budget` - Check budget vs actual spending
 - `/stats` - Complete statistics overview
 
 ### 🤖 AI Features:
+
 - `/predizioni` - AI predictions for future expenses
-- `/pattern` - Behavioral pattern analysis  
+- `/pattern` - Behavioral pattern analysis
 - `/raccomandazioni` - Personalized AI recommendations
 
 ## 🔒 **Environment Variables**
@@ -76,7 +81,7 @@ OPENAI_API_KEY=your_openai_api_key
 
 ```
 ├── financebot_final.py     # Main bot application
-├── spese_manager.py        # CSV database manager  
+├── spese_manager.py        # CSV database manager
 ├── analytics.py            # Charts and visualizations
 ├── ai_predictor.py         # ML predictions
 ├── requirements.txt        # Python dependencies
@@ -109,3 +114,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **🤖 Try the bot:** [@SpesaAIbot](https://t.me/SpesaAIbot)  
 **🚀 Deploy yours:** Click the Railway button above!
+# Deploy: Sab 20 Set 2025 18:17:51 CEST
