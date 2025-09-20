@@ -625,23 +625,29 @@ async def credito_openai(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Dati reali dall'API
             messaggio = f"""💳 <b>OPENAI USAGE - DATI REALI</b>
 
-✅ <b>API Status:</b>
-🔸 Connessione: ✅ Attiva
+✅ <b>Status API:</b>
+🔸 Connessione: ✅ Funzionante
 🔸 Periodo: {credito_info.get('periodo_attuale', 'N/A')}
+🔸 Giorni con dati: {credito_info.get('giorni_con_dati', 0)}
 
-📊 <b>Usage Mese Corrente:</b>
-🔸 Richieste effettuate: {credito_info.get('richieste_mese', 0):,}
-🔸 Token utilizzati: {credito_info.get('token_totali', 0):,}
-🔸 Costo reale: {credito_info.get('costo_eur', '€0.00')}
+📊 <b>Usage Effettivo:</b>
+🔸 Richieste totali: {credito_info.get('richieste_totali', 0):,}
+🔸 Token input: {credito_info.get('token_input', 0):,}
+🔸 Token output: {credito_info.get('token_output', 0):,}
+🔸 Token totali: {credito_info.get('token_totali', 0):,}
 
-📈 <b>Proiezione Mensile:</b>
-🔸 Richieste/giorno stimate: {stima_costi['richieste_giornaliere']}
-🔸 Costo stimato fine mese: {stima_costi['costo_mensile_eur']}
+💰 <b>Costi Reali:</b>
+🔸 Costo mese: {credito_info.get('costo_eur', '€0.00')}
+🔸 Usage totale: {credito_info.get('usage_totale', 0)}
 
-📊 <b>Dashboard Dettagliata:</b>
+📈 <b>Stima Mensile:</b>
+🔸 Richieste/giorno: {stima_costi['richieste_giornaliere']}
+🔸 Proiezione fine mese: {stima_costi['costo_mensile_eur']}
+
+📊 <b>Dashboard:</b>
 🔗 <a href="{credito_info.get('dashboard_url')}">OpenAI Usage Dashboard</a>
 
-⏰ <b>Ultimo aggiornamento:</b> {credito_info.get('ultimo_controllo', 'N/A')}
+⏰ <b>Aggiornamento:</b> {credito_info.get('ultimo_controllo', 'N/A')}
 """
         
         elif status == "limited_access":

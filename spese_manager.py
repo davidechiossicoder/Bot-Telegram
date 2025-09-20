@@ -291,7 +291,7 @@ class SpeseManager:
 
     def check_openai_credit(self) -> Dict:
         """
-        Controlla le informazioni del credito OpenAI usando l'API usage corretta
+        Controlla le informazioni del credito OpenAI usando l'API /v1/usage standard
         
         Returns:
             Dict con informazioni disponibili e stime
@@ -300,101 +300,85 @@ class SpeseManager:
             return {"error": "API Key OpenAI non configurata nel file .env"}
         
         try:
-            # Prima verifica se l'API key funziona
-            from openai import OpenAI
-            client = OpenAI(api_key=self.openai_api_key)
+            # Date per il controllo (ultimi 30 giorni)
+            today = datetime.now().date()
+            start_date = today.replace(day=1)  # Primo del mese
             
-            # Test connessione
-            models = client.models.list()
-            
-            # Calcola timestamp per inizio mese (Unix timestamp)
-            today = datetime.now()
-            start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            start_timestamp = int(start_of_month.timestamp())
-            
-            # Chiamata API usage corretta
+            # Headers per l'API
             headers = {
-                'Authorization': f'Bearer {self.openai_api_key}',
-                'Content-Type': 'application/json'
+                'Authorization': f'Bearer {self.openai_api_key}'
             }
             
-            # Prova l'API usage per completions
-            usage_url = f"https://api.openai.com/v1/organization/usage/completions"
+            # Parametri per l'API usage
             params = {
-                'start_time': start_timestamp,
-                'limit': 100  # Prendi gli ultimi 100 record
+                "start_date": start_date.isoformat(),
+                "end_date": today.isoformat()
             }
             
+            # Chiamata API /v1/usage standard
+            usage_url = "https://api.openai.com/v1/usage"
             response = requests.get(usage_url, headers=headers, params=params, timeout=30)
             
             if response.status_code == 200:
                 usage_data = response.json()
                 
                 # Analizza i dati
-                completions = usage_data.get('data', [])
-                total_requests = len(completions)
-                total_tokens = sum([c.get('n_context_tokens_total', 0) + c.get('n_generated_tokens_total', 0) for c in completions])
+                daily_usage = usage_data.get('data', [])
+                total_usage = usage_data.get('total_usage', 0)
+                
+                # Calcola statistiche
+                total_days = len(daily_usage)
+                total_requests = sum([day.get('n_requests', 0) for day in daily_usage])
+                total_tokens = sum([
+                    day.get('n_context_tokens_total', 0) + day.get('n_generated_tokens_total', 0) 
+                    for day in daily_usage
+                ])
                 
                 # Stima costi (GPT-3.5-turbo pricing)
-                input_cost = sum([c.get('n_context_tokens_total', 0) for c in completions]) / 1000 * 0.0005
-                output_cost = sum([c.get('n_generated_tokens_total', 0) for c in completions]) / 1000 * 0.0015
+                input_tokens = sum([day.get('n_context_tokens_total', 0) for day in daily_usage])
+                output_tokens = sum([day.get('n_generated_tokens_total', 0) for day in daily_usage])
+                
+                input_cost = (input_tokens / 1000) * 0.0005   # $0.0005 per 1K input tokens
+                output_cost = (output_tokens / 1000) * 0.0015  # $0.0015 per 1K output tokens
                 total_cost = input_cost + output_cost
                 
                 return {
                     "status": "success",
                     "api_key_valida": True,
-                    "periodo_attuale": f"{start_of_month.strftime('%Y-%m-%d')} - {today.strftime('%Y-%m-%d')}",
-                    "richieste_mese": total_requests,
+                    "periodo_attuale": f"{start_date.isoformat()} - {today.isoformat()}",
+                    "giorni_con_dati": total_days,
+                    "richieste_totali": total_requests,
+                    "token_input": input_tokens,
+                    "token_output": output_tokens,
                     "token_totali": total_tokens,
                     "costo_usd": f"${total_cost:.6f}",
                     "costo_eur": f"€{total_cost * 0.95:.6f}",
+                    "usage_totale": total_usage,
                     "modello_principale": "gpt-3.5-turbo",
-                    "note": "Dati reali dall'API OpenAI Usage",
+                    "note": "Dati reali dall'API OpenAI /v1/usage",
                     "dashboard_url": "https://platform.openai.com/usage",
                     "ultimo_controllo": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
             
+            elif response.status_code == 401:
+                return {"error": "API Key non valida o scaduta"}
             elif response.status_code == 403:
-                # Fallback: API key funziona ma non ha accesso all'usage
+                return {"error": "Accesso negato - verifica permessi API Key"}
+            elif response.status_code == 429:
+                return {"error": "Rate limit raggiunto - riprova più tardi"}
+            else:
                 return {
-                    "status": "limited_access",
-                    "api_key_valida": True,
-                    "periodo_attuale": f"{start_of_month.strftime('%Y-%m-%d')} - {today.strftime('%Y-%m-%d')}",
-                    "modelli_disponibili": len([m for m in models.data if "gpt" in m.id.lower()]),
-                    "modello_principale": "gpt-3.5-turbo", 
-                    "note": "API Key funzionante ma senza accesso usage - usa dashboard",
-                    "dashboard_url": "https://platform.openai.com/usage",
-                    "ultimo_controllo": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    "error": f"Errore API OpenAI: {response.status_code}",
+                    "dettagli": response.text[:200] + "..." if len(response.text) > 200 else response.text
                 }
             
-            else:
-                return {"error": f"Errore API usage: {response.status_code} - {response.text[:200]}"}
-            
+        except requests.exceptions.Timeout:
+            return {"error": "Timeout - API OpenAI non risponde entro 30 secondi"}
+        except requests.exceptions.RequestException as e:
+            return {"error": f"Errore di connessione: {str(e)}"}
         except Exception as e:
-            error_msg = str(e)
-            
-            # Fallback con informazioni di base
-            today = datetime.now()
-            start_date = today.replace(day=1).strftime("%Y-%m-%d")
-            
-            if "invalid" in error_msg.lower() or "unauthorized" in error_msg.lower() or "401" in error_msg:
-                status_msg = "❌ API Key non valida o scaduta"
-            elif "quota" in error_msg.lower() or "exceeded" in error_msg.lower():
-                status_msg = "⚠️ Quota OpenAI raggiunta"
-            elif "billing" in error_msg.lower():
-                status_msg = "💳 Problema di fatturazione"
-            else:
-                status_msg = "⚠️ Temporaneamente non disponibile"
-            
-            return {
-                "status": "error_fallback",
-                "api_key_valida": False,
-                "periodo_attuale": f"{start_date} - {today.strftime('%Y-%m-%d')}",
-                "note": f"{status_msg} - Verifica manualmente su dashboard",
-                "dashboard_url": "https://platform.openai.com/usage",
-                "ultimo_controllo": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "errore_tecnico": error_msg[:150] + "..." if len(error_msg) > 150 else error_msg
-            }
+            logger.error(f"❌ Errore controllo credito OpenAI: {e}")
+            return {"error": f"Errore interno: {str(e)}"}
 
     def stima_costo_mensile(self, richieste_al_giorno: int = 50) -> Dict:
         """
