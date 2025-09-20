@@ -250,8 +250,10 @@ Modifica `config.json` per budget personalizzati
 
 async def segnaspese(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Attiva modalità registrazione spese"""
+    logger.info(f"🔥 /segnaspese chiamato da user {update.effective_user.id}")
     user_id = update.effective_user.id
     bot.user_modes[user_id] = 'spese'
+    logger.info(f"✅ Modalità spese attivata per user {user_id}")
     
     messaggio = """💸 *MODALITÀ SPESE ATTIVATA*
 
