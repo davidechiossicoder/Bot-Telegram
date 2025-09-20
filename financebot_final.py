@@ -615,24 +615,75 @@ async def credito_openai(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Ottieni stima costi
         stima_costi = bot.spese_manager.stima_costo_mensile()
         
-        # Prepara messaggio
-        messaggio = f"""💳 <b>CREDITO OPENAI</b>
+        # Ottieni stima costi
+        stima_costi = bot.spese_manager.stima_costo_mensile()
+        
+        # Prepara messaggio basato sullo status
+        status = credito_info.get('status', 'unknown')
+        
+        if status == "success":
+            # Dati reali dall'API
+            messaggio = f"""💳 <b>OPENAI USAGE - DATI REALI</b>
+
+✅ <b>API Status:</b>
+🔸 Connessione: ✅ Attiva
+🔸 Periodo: {credito_info.get('periodo_attuale', 'N/A')}
 
 📊 <b>Usage Mese Corrente:</b>
-🔸 Periodo: {credito_info['periodo']}
-🔸 Giorni con usage: {credito_info['giorni_con_usage']}
-🔸 Costo stimato: {credito_info['costo_stimato_eur']}
+🔸 Richieste effettuate: {credito_info.get('richieste_mese', 0):,}
+🔸 Token utilizzati: {credito_info.get('token_totali', 0):,}
+🔸 Costo reale: {credito_info.get('costo_eur', '€0.00')}
 
-📈 <b>Stima Mensile:</b>
+📈 <b>Proiezione Mensile:</b>
+🔸 Richieste/giorno stimate: {stima_costi['richieste_giornaliere']}
+🔸 Costo stimato fine mese: {stima_costi['costo_mensile_eur']}
+
+📊 <b>Dashboard Dettagliata:</b>
+🔗 <a href="{credito_info.get('dashboard_url')}">OpenAI Usage Dashboard</a>
+
+⏰ <b>Ultimo aggiornamento:</b> {credito_info.get('ultimo_controllo', 'N/A')}
+"""
+        
+        elif status == "limited_access":
+            # API funziona ma senza accesso usage
+            messaggio = f"""💳 <b>OPENAI STATUS</b>
+
+✅ <b>API Status:</b>
+🔸 Connessione: ✅ Attiva
+🔸 Modelli disponibili: {credito_info.get('modelli_disponibili', 'N/A')}
+🔸 Accesso Usage: ❌ Non disponibile
+
+📈 <b>Stima Costi (Proiezione):</b>
+🔸 Richieste/giorno: {stima_costi['richieste_giornaliere']}
+🔸 Costo mensile stimato: {stima_costi['costo_mensile_eur']}
+🔸 Token stimati: {stima_costi['token_stimati_mese']:,}
+
+📊 <b>Monitoraggio Manuale:</b>
+🔗 <a href="{credito_info.get('dashboard_url')}">Dashboard OpenAI Usage</a>
+
+💡 <b>Nota:</b> {credito_info.get('note', 'Verifica manualmente su dashboard')}
+
+⏰ <b>Controllo:</b> {credito_info.get('ultimo_controllo', 'N/A')}
+"""
+        
+        else:
+            # Errore o fallback
+            messaggio = f"""� <b>OPENAI STATUS - LIMITATO</b>
+
+⚠️ <b>Status:</b>
+🔸 API Key: {'✅' if credito_info.get('api_key_valida') else '❌'} 
+🔸 Periodo: {credito_info.get('periodo_attuale', 'N/A')}
+
+📈 <b>Stima Teorica:</b>
 🔸 Richieste/giorno: {stima_costi['richieste_giornaliere']}
 🔸 Costo mensile: {stima_costi['costo_mensile_eur']}
-🔸 Token stimati: {stima_costi['token_stimati_mese']:,}
-🔸 Modello: {stima_costi['modello']}
 
-⏰ <b>Ultimo aggiornamento:</b>
-{credito_info['ultimo_aggiornamento']}
+📊 <b>Verifica Manuale:</b>
+🔗 <a href="{credito_info.get('dashboard_url')}">Dashboard OpenAI</a>
 
-💡 <b>Nota:</b> Stime basate su GPT-3.5-turbo
+💡 <b>Nota:</b> {credito_info.get('note', 'Controlla dashboard per dettagli')}
+
+⏰ <b>Ultimo tentativo:</b> {credito_info.get('ultimo_controllo', 'N/A')}
 """
         
         await update.message.reply_text(messaggio, parse_mode='HTML')

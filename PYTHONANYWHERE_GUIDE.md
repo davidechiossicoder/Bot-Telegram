@@ -20,6 +20,7 @@ PythonAnywhere offre hosting Python gratuito perfetto per bot Telegram 24/7!
 5. **Verifica email** e attiva l'account
 
 ### 1.2 Limiti Account Gratuito:
+
 - ✅ **Always-On Tasks:** 1 (perfetto per 1 bot)
 - ✅ **CPU Seconds:** 100/giorno (sufficiente per bot)
 - ✅ **Disk Space:** 512MB
@@ -146,7 +147,7 @@ load_dotenv()  # ← Aggiungi questa linea
 
 1. **Dashboard PythonAnywhere** → **"Tasks"**
 2. Clicca **"Create an always-on task"**
-3. **Command:** 
+3. **Command:**
    ```bash
    /home/davidechiossi/finance-ai-bot/botenv/bin/python /home/davidechiossi/finance-ai-bot/financebot_final.py
    ```
