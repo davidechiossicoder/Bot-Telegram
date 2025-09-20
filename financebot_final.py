@@ -595,6 +595,55 @@ async def gestisci_testo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await update.message.reply_text(messaggio, parse_mode='Markdown')
 
+async def credito_openai(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """🔍 Mostra info credito e usage OpenAI"""
+    logger.info(f"🔍 /credito chiamato da {update.effective_user.id}")
+    
+    await update.message.reply_text("🔍 Controllo credito OpenAI...", parse_mode='HTML')
+    
+    try:
+        # Controlla credito
+        credito_info = bot.spese_manager.check_openai_credit()
+        
+        if "error" in credito_info:
+            await update.message.reply_text(
+                f"❌ <b>Errore controllo credito:</b>\n{credito_info['error']}", 
+                parse_mode='HTML'
+            )
+            return
+        
+        # Ottieni stima costi
+        stima_costi = bot.spese_manager.stima_costo_mensile()
+        
+        # Prepara messaggio
+        messaggio = f"""💳 <b>CREDITO OPENAI</b>
+
+📊 <b>Usage Mese Corrente:</b>
+🔸 Periodo: {credito_info['periodo']}
+🔸 Giorni con usage: {credito_info['giorni_con_usage']}
+🔸 Costo stimato: {credito_info['costo_stimato_eur']}
+
+📈 <b>Stima Mensile:</b>
+🔸 Richieste/giorno: {stima_costi['richieste_giornaliere']}
+🔸 Costo mensile: {stima_costi['costo_mensile_eur']}
+🔸 Token stimati: {stima_costi['token_stimati_mese']:,}
+🔸 Modello: {stima_costi['modello']}
+
+⏰ <b>Ultimo aggiornamento:</b>
+{credito_info['ultimo_aggiornamento']}
+
+💡 <b>Nota:</b> Stime basate su GPT-3.5-turbo
+"""
+        
+        await update.message.reply_text(messaggio, parse_mode='HTML')
+        
+    except Exception as e:
+        logger.error(f"❌ Errore comando credito: {e}")
+        await update.message.reply_text(
+            f"❌ Errore interno: {str(e)}", 
+            parse_mode='HTML'
+        )
+
 async def setup_bot_commands(app):
     """Configura il menu dei comandi del bot"""
     commands = [
@@ -609,6 +658,7 @@ async def setup_bot_commands(app):
         BotCommand("stats", "📈 Statistiche complete del periodo"),
         BotCommand("predizioni", "🔮 Predizioni AI spese future"),
         BotCommand("pattern", "🔍 Analisi pattern comportamentali"),
+        BotCommand("credito", "💳 Controlla credito e usage OpenAI"),
         BotCommand("raccomandazioni", "💡 Consigli AI personalizzati")
     ]
     
@@ -643,6 +693,7 @@ def main():
     app.add_handler(CommandHandler("predizioni", predizioni_cmd))
     app.add_handler(CommandHandler("pattern", pattern_cmd))
     app.add_handler(CommandHandler("raccomandazioni", raccomandazioni_cmd))
+    app.add_handler(CommandHandler("credito", credito_openai))
     
     # Testi (spese)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, gestisci_testo))

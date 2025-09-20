@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import shutil
 from typing import Dict, List, Optional, Tuple
 import logging
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,6 +30,9 @@ class SpeseManager:
         
         # Crea directory backup se non esiste
         os.makedirs(backup_dir, exist_ok=True)
+        
+        # OpenAI API key per monitoraggio
+        self.openai_api_key = os.getenv('OPENAI_API_KEY')
         
         # Inizializza file se non esistono
         self._init_files()
@@ -284,6 +288,111 @@ class SpeseManager:
         except Exception as e:
             logger.error(f"❌ Errore statistiche: {e}")
             return {}
+
+    def check_openai_credit(self) -> Dict:
+        """
+        Controlla il credito residuo OpenAI
+        
+        Returns:
+            Dict con informazioni su credito, usage, limiti
+        """
+        if not self.openai_api_key:
+            return {"error": "API Key OpenAI non trovata"}
+        
+        try:
+            headers = {
+                'Authorization': f'Bearer {self.openai_api_key}',
+                'Content-Type': 'application/json'
+            }
+            
+            # Chiamata API per usage del mese corrente
+            usage_url = "https://api.openai.com/v1/usage"
+            today = datetime.now()
+            start_date = today.replace(day=1).strftime("%Y-%m-%d")  # Primo del mese
+            end_date = today.strftime("%Y-%m-%d")
+            
+            params = {
+                'start_date': start_date,
+                'end_date': end_date
+            }
+            
+            response = requests.get(usage_url, headers=headers, params=params, timeout=30)
+            
+            if response.status_code == 200:
+                usage_data = response.json()
+                
+                # Calcola totale usage del mese
+                total_requests = len(usage_data.get('data', []))
+                
+                # Calcola costo stimato (GPT-3.5-turbo pricing)
+                total_cost = 0
+                for day_usage in usage_data.get('data', []):
+                    # Stima basata su token medi per richiesta
+                    requests_day = day_usage.get('n_requests', 0)
+                    total_cost += requests_day * 0.001  # ~$0.001 per richiesta stimato
+                
+                return {
+                    "status": "success",
+                    "periodo": f"{start_date} - {end_date}",
+                    "giorni_con_usage": total_requests,
+                    "costo_stimato_usd": f"${total_cost:.4f}",
+                    "costo_stimato_eur": f"€{total_cost * 0.95:.4f}",
+                    "ultimo_aggiornamento": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+            
+            elif response.status_code == 401:
+                return {"error": "API Key non valida o scaduta"}
+            elif response.status_code == 403:
+                return {"error": "Accesso negato - verifica permessi API Key"}
+            else:
+                return {
+                    "error": f"Errore API OpenAI: {response.status_code}",
+                    "message": response.text
+                }
+                
+        except requests.exceptions.Timeout:
+            return {"error": "Timeout - API OpenAI non risponde"}
+        except requests.exceptions.RequestException as e:
+            return {"error": f"Errore connessione: {str(e)}"}
+        except Exception as e:
+            logger.error(f"❌ Errore controllo credito OpenAI: {e}")
+            return {"error": str(e)}
+
+    def stima_costo_mensile(self, richieste_al_giorno: int = 50) -> Dict:
+        """
+        Stima il costo mensile basato sull'usage stimato
+        
+        Args:
+            richieste_al_giorno: Numero stimato di richieste bot al giorno
+        
+        Returns:
+            Stima costi mensili
+        """
+        try:
+            # Parametri stima per GPT-3.5-turbo
+            token_medi_per_richiesta = 50  # Input + output medio per categorizzazione
+            giorni_mese = 30
+            
+            richieste_mese = richieste_al_giorno * giorni_mese
+            token_totali_mese = richieste_mese * token_medi_per_richiesta
+            
+            # Costo GPT-3.5-turbo (prezzi settembre 2024)
+            costo_input = (token_totali_mese * 0.7) / 1000 * 0.0005   # 70% input, $0.0005/1k
+            costo_output = (token_totali_mese * 0.3) / 1000 * 0.0015  # 30% output, $0.0015/1k
+            costo_totale = costo_input + costo_output
+            
+            return {
+                "richieste_giornaliere": richieste_al_giorno,
+                "richieste_mensili": richieste_mese,
+                "token_stimati_mese": token_totali_mese,
+                "costo_mensile_usd": f"${costo_totale:.4f}",
+                "costo_mensile_eur": f"€{costo_totale * 0.95:.4f}",
+                "modello": "gpt-3.5-turbo",
+                "note": "Stima basata su categorizzazione spese"
+            }
+            
+        except Exception as e:
+            return {"error": f"Errore stima costi: {e}"}
 
 # Test rapido
 if __name__ == "__main__":
