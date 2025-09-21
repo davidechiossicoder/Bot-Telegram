@@ -11,6 +11,19 @@
 financebot.log
 logs/
 
+# Documentazione e guide non necessarie
+*_GUIDE.md
+CHECKLIST.md
+DEPLOY_STEPS.md
+PRODUCTION_DEPLOY.md
+PYTHONANYWHERE_GUIDE.md
+RAILWAY_GUIDE.md
+
+# Backup e cartelle temporanee
+backup/
+deploy_backup/
+test_*.xlsx
+
 # Python
 __pycache__/
 *.py[cod]

@@ -1,15 +1,1 @@
 data,nome_transazione,categoria,importo,tipo,note
-2025-09-18,Setup iniziale,Sistema,0.0,spesa,Creazione database spese
-2025-09-18,Caffè del mattino,Ristorazione,2.5,spesa,Bar sotto casa
-2025-09-18,Benzina Eni,Trasporti,45.0,spesa,
-2025-09-18,Spesa Coop,Alimentari,87.5,spesa,
-2025-09-18,Pranzo pizzeria,Ristorazione,15.0,spesa,
-2025-09-18,Bolletta luce,Casa,120.0,spesa,
-2025-09-18,Farmacia,Salute,25.5,spesa,
-2025-09-18,Cinema,Svago,12.0,spesa,
-2025-09-18,Caffè bar,Ristorazione,3.5,spesa,
-2025-09-18,Parcheggio,Trasporti,2.0,spesa,
-2025-09-18,Supermercato,Alimentari,45.2,spesa,
-2025-09-20,euro cena smashata,Ristorazione,4.0,spesa,Bot - Da
-2025-09-20,euro colazione,Varie,7.0,spesa,Bot - Da
-2025-09-20,euro disco hdd mediaworld,Varie,70.0,spesa,Bot - Da
