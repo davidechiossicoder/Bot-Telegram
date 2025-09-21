@@ -309,15 +309,9 @@ class SpeseManager:
                 'Authorization': f'Bearer {self.openai_api_key}'
             }
             
-            # Parametri per l'API usage
-            params = {
-                "start_date": start_date.isoformat(),
-                "end_date": today.isoformat()
-            }
-            
-            # Chiamata API /v1/usage standard
-            usage_url = "https://api.openai.com/v1/usage"
-            response = requests.get(usage_url, headers=headers, params=params, timeout=30)
+            # Chiamata API /v1/usage per oggi (formato corretto)
+            usage_url = f"https://api.openai.com/v1/usage?date={today.isoformat()}"
+            response = requests.get(usage_url, headers=headers, timeout=30)
             
             if response.status_code == 200:
                 usage_data = response.json()
