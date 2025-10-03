@@ -10,11 +10,13 @@ import re
 import json
 import logging
 import pandas as pd
+import threading
 from datetime import datetime
 from dotenv import load_dotenv
 from telegram import Update, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from openai import OpenAI
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Import sistemi locali
 from spese_manager import SpeseManager
@@ -722,6 +724,25 @@ async def setup_bot_commands(app):
     await app.bot.set_my_commands(commands)
     logger.info("✅ Menu comandi bot configurato!")
 
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    """Semplice health check per Render"""
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b'Bot is running!')
+    
+    def log_message(self, format, *args):
+        # Disable HTTP server logging
+        pass
+
+def start_health_server():
+    """Avvia server HTTP per health check su Render"""
+    port = int(os.environ.get('PORT', 10000))
+    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+    logger.info(f"✅ Health server avviato su porta {port}")
+    server.serve_forever()
+
 def main():
     """Avvia il Finance AI Bot"""
     print("=" * 50)
@@ -733,6 +754,10 @@ def main():
     if not TOKEN:
         print("❌ Token mancante!")
         return
+    
+    # Avvia health server in background per Render
+    health_thread = threading.Thread(target=start_health_server, daemon=True)
+    health_thread.start()
     
     # Setup bot
     app = Application.builder().token(TOKEN).build()
